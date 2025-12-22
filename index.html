@@ -2,14 +2,16 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>人生すごろく（2〜5人・順番）</title>
+  <title>人生すごろく（2〜5人・イラスト付き）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: sans-serif; background:#f0f9ff; padding:12px }
     h1 { font-size:22px }
     #setup, #game { max-width:520px; margin:auto }
     #board { display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin-bottom:12px }
-    .cell { background:white; border-radius:10px; padding:6px; font-size:11px; min-height:54px }
+    .cell { background:white; border-radius:10px; padding:6px; font-size:11px; min-height:70px }
+    .event { font-size:10px; margin-top:2px }
+    .icon { font-size:18px }
     .p0{background:#fde68a} .p1{background:#bbf7d0} .p2{background:#bfdbfe} .p3{background:#fbcfe8} .p4{background:#ddd6fe}
     button { padding:10px 16px; border-radius:999px; border:none; background:#2563eb; color:white; font-size:15px }
     input { padding:6px }
@@ -19,7 +21,7 @@
 </head>
 <body>
 
-<h1>🎲 人生すごろく（2〜5人）</h1>
+<h1>🎲 人生すごろく（イラスト付き）</h1>
 
 <div id="setup">
   <p>何人で遊ぶ？（2〜5人）</p>
@@ -41,13 +43,15 @@
   let players = [];
   let current = 0;
 
-  // マスのイベント
+  // マスのイベント（最初から表示）
   const events = {
-    25: { text: '昇進！1マス進む', move: 1 },
-    28: { text: '夜ふかししすぎ…1回休み', skip: 1 },
-    35: { text: '転職失敗…1マス戻る', move: -1 },
-    40: { text: '家を買った！1回休み', skip: 1 },
-    50: { text: '子ども独立！2マス進む', move: 2 }
+    25: { icon: '💼', text: '昇進！1マス進む', move: 1 },
+    28: { icon: '🎮', text: '夜ふかし…1回休み', skip: 1 },
+    30: { icon: '💍', text: '結婚！2マス進む', move: 2 },
+    35: { icon: '😢', text: '転職失敗…1マス戻る', move: -1 },
+    40: { icon: '🏠', text: '家を買う！1回休み', skip: 1 },
+    50: { icon: '🎓', text: '子ども独立！2マス進む', move: 2 },
+    60: { icon: '🧓', text: '定年が近い…そのまま' }
   };
 
   function startGame() {
@@ -72,6 +76,12 @@
       const cell = document.createElement('div');
       cell.className = 'cell';
       cell.innerHTML = `<strong>${i}歳</strong>`;
+
+      if (events[i]) {
+        cell.innerHTML += `<div class="icon">${events[i].icon}</div>`;
+        cell.innerHTML += `<div class="event">${events[i].text}</div>`;
+      }
+
       players.forEach((p, idx) => {
         if (p.age === i) {
           const m = document.createElement('div');
