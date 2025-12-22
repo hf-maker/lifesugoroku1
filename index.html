@@ -2,118 +2,130 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>人生すごろく（65歳ゴール）</title>
+  <title>人生すごろく（2〜5人・順番）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f0f9ff;
-      padding: 20px;
-    }
-    h1 {
-      font-size: 24px;
-    }
-    #board {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      max-width: 500px;
-      margin-bottom: 20px;
-    }
-    .cell {
-      background: white;
-      border-radius: 12px;
-      padding: 10px;
-      text-align: center;
-      font-size: 13px;
-      min-height: 60px;
-    }
-    .player {
-      background: #fde68a;
-      border: 2px solid #f59e0b;
-      font-weight: bold;
-    }
-    button {
-      padding: 12px 20px;
-      border-radius: 999px;
-      border: none;
-      background: #2563eb;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #log {
-      margin-top: 16px;
-      background: white;
-      padding: 12px;
-      border-radius: 12px;
-      max-width: 500px;
-      min-height: 60px;
-    }
+    body { font-family: sans-serif; background:#f0f9ff; padding:12px }
+    h1 { font-size:22px }
+    #setup, #game { max-width:520px; margin:auto }
+    #board { display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin-bottom:12px }
+    .cell { background:white; border-radius:10px; padding:6px; font-size:11px; min-height:54px }
+    .p0{background:#fde68a} .p1{background:#bbf7d0} .p2{background:#bfdbfe} .p3{background:#fbcfe8} .p4{background:#ddd6fe}
+    button { padding:10px 16px; border-radius:999px; border:none; background:#2563eb; color:white; font-size:15px }
+    input { padding:6px }
+    #log { background:white; padding:10px; border-radius:10px; min-height:50px }
+    #turn { font-weight:bold; margin-bottom:6px }
   </style>
 </head>
 <body>
 
-<h1>🎲 人生すごろく（65歳でゴール）</h1>
-<p>サイコロをふって進もう！</p>
+<h1>🎲 人生すごろく（2〜5人）</h1>
 
-<div id="board"></div>
-<button onclick="rollDice()">サイコロをふる</button>
-<div id="log"></div>
+<div id="setup">
+  <p>何人で遊ぶ？（2〜5人）</p>
+  <input type="number" id="playerCount" min="2" max="5" value="2" /> 人
+  <br><br>
+  <button onclick="startGame()">ゲーム開始</button>
+</div>
+
+<div id="game" style="display:none">
+  <p id="turn"></p>
+  <div id="board"></div>
+  <button onclick="rollDice()">サイコロをふる</button>
+  <div id="log"></div>
+</div>
 
 <script>
   const START = 20;
   const GOAL = 65;
-  let age = START;
+  let players = [];
+  let current = 0;
 
+  // マスのイベント
   const events = {
-    25: "昇進！1マス進む",
-    30: "結婚！2マス進む",
-    35: "転職失敗…1マス戻る",
-    40: "家を買った！1回休み（気分だけ）",
-    50: "子ども独立！2マス進む",
-    60: "定年が近い…"
+    25: { text: '昇進！1マス進む', move: 1 },
+    28: { text: '夜ふかししすぎ…1回休み', skip: 1 },
+    35: { text: '転職失敗…1マス戻る', move: -1 },
+    40: { text: '家を買った！1回休み', skip: 1 },
+    50: { text: '子ども独立！2マス進む', move: 2 }
   };
 
+  function startGame() {
+    const count = Number(document.getElementById('playerCount').value);
+    if (count < 2 || count > 5) return;
+
+    players = [];
+    for (let i = 0; i < count; i++) {
+      players.push({ name: 'プレイヤー' + (i+1), age: START, skip: 0 });
+    }
+
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+    updateTurnText();
+    drawBoard();
+  }
+
   function drawBoard() {
-    const board = document.getElementById("board");
-    board.innerHTML = "";
+    const board = document.getElementById('board');
+    board.innerHTML = '';
     for (let i = START; i <= GOAL; i++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      if (i === age) cell.classList.add("player");
+      const cell = document.createElement('div');
+      cell.className = 'cell';
       cell.innerHTML = `<strong>${i}歳</strong>`;
-      if (events[i]) {
-        cell.innerHTML += `<br><small>${events[i]}</small>`;
-      }
+      players.forEach((p, idx) => {
+        if (p.age === i) {
+          const m = document.createElement('div');
+          m.className = 'p' + idx;
+          m.textContent = p.name;
+          cell.appendChild(m);
+        }
+      });
       board.appendChild(cell);
     }
   }
 
   function rollDice() {
-    if (age >= GOAL) return;
+    const p = players[current];
+
+    if (p.skip > 0) {
+      p.skip--;
+      log(`${p.name}は1回お休み`);
+      nextTurn();
+      return;
+    }
+
     const dice = Math.floor(Math.random() * 6) + 1;
-    age += dice;
+    p.age += dice;
+    log(`${p.name}：${dice}が出た！`);
 
-    let text = `🎲 ${dice}が出た！ ${age}歳へ`;
-
-    if (events[age]) {
-      text += `<br>👉 ${events[age]}`;
-      if (age === 25) age += 1;
-      if (age === 30) age += 2;
-      if (age === 35) age -= 1;
-      if (age === 50) age += 2;
+    const e = events[p.age];
+    if (e) {
+      log('👉 ' + e.text);
+      if (e.move) p.age += e.move;
+      if (e.skip) p.skip = e.skip;
     }
 
-    if (age >= GOAL) {
-      age = GOAL;
-      text += "<br>🎉 65歳！ゴール！";
+    if (p.age >= GOAL) {
+      p.age = GOAL;
+      log(`🎉 ${p.name} ゴール！`);
     }
 
-    document.getElementById("log").innerHTML = text;
     drawBoard();
+    nextTurn();
   }
 
-  drawBoard();
+  function nextTurn() {
+    current = (current + 1) % players.length;
+    updateTurnText();
+  }
+
+  function updateTurnText() {
+    document.getElementById('turn').textContent = `👉 ${players[current].name} の番`;
+  }
+
+  function log(text) {
+    document.getElementById('log').innerHTML = text;
+  }
 </script>
 
 </body>
