@@ -4,144 +4,117 @@
   <meta charset="UTF-8" />
   <title>人生すごろく（65歳ゴール）</title>
   <style>
-    body { font-family: system-ui, sans-serif; background:#f0f9ff; padding:20px }
-    h1 { font-size:24px }
-    #board { display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; max-width:500px; margin-bottom:20px }
-    .cell { background:white; border-radius:12px; padding:10px; text-align:center; font-size:13px; min-height:70px; box-shadow:0 2px 4px rgba(0,0,0,0.1) }
-    .player { background:#fde68a; border:2px solid #f59e0b; font-weight:bold }
-    .event { font-size:11px; margin-top:4px }
-    button { padding:12px 20px; border-radius:999px; border:none; background:#2563eb; color:white; font-size:16px; cursor:pointer }
-    #log { margin-top:16px; background:white; padding:12px; border-radius:12px; max-width:500px; min-height:60px }
+    body {
+      font-family: sans-serif;
+      background: #f0f9ff;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 24px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      max-width: 500px;
+      margin-bottom: 20px;
+    }
+    .cell {
+      background: white;
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      font-size: 13px;
+      min-height: 60px;
+    }
+    .player {
+      background: #fde68a;
+      border: 2px solid #f59e0b;
+      font-weight: bold;
+    }
+    button {
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #log {
+      margin-top: 16px;
+      background: white;
+      padding: 12px;
+      border-radius: 12px;
+      max-width: 500px;
+      min-height: 60px;
+    }
   </style>
 </head>
 <body>
-  <h1>🎲 人生すごろく（65歳でゴール）</h1>
-  <p>止まったマスの効果が発動！</p>
 
-  <div id="board"></div>
-  <button onclick="rollDice()">サイコロを振る</button>
-  <div id="log"></div>
+<h1>🎲 人生すごろく（65歳でゴール）</h1>
+<p>サイコロをふって進もう！</p>
 
-  <h2>💬 チャット</h2>
-  <div id="chat" style="background:white; padding:8px; border-radius:8px; max-width:500px; height:120px; overflow-y:auto"></div>
-  <input id="name" placeholder="名前" style="width:80px" />
-  <input id="message" placeholder="メッセージ" style="width:260px" />
-  <button onclick="sendMessage()">送信</button>
+<div id="board"></div>
+<button onclick="rollDice()">サイコロをふる</button>
+<div id="log"></div>
 
-  <script type="module">
-    // Firebase設定（ここを自分のプロジェクトに差し替えてね）
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getDatabase, ref, push, onChildAdded } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+<script>
+  const START = 20;
+  const GOAL = 65;
+  let age = START;
 
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_DOMAIN",
-      databaseURL: "YOUR_DB_URL",
-      projectId: "YOUR_PROJECT_ID"
-    };
+  const events = {
+    25: "昇進！1マス進む",
+    30: "結婚！2マス進む",
+    35: "転職失敗…1マス戻る",
+    40: "家を買った！1回休み（気分だけ）",
+    50: "子ども独立！2マス進む",
+    60: "定年が近い…"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const chatRef = ref(db, 'chat');
-
-    const GOAL = 65;
-    const START = 20;
-    let age = START;
-
-    const events = {
-      22: { text: '資格取得！+2マス進む', move: 2 },
-      25: { text: '昇進！+1マス進む', move: 1 },
-      28: { text: '浪費しすぎた…1回休み', skip: 1 },
-      30: { text: '結婚！ご祝儀で+2マス', move: 2 },
-      35: { text: '転職失敗…2マス戻る', move: -2 },
-      40: { text: 'マイホーム購入！ローンで1回休み', skip: 1 },
-      45: { text: '健康診断ひっかかる…1マス戻る', move: -1 },
-      50: { text: '子ども独立！+2マス', move: 2 },
-      60: { text: '定年目前。ゆっくり進もう（次は必ず1）' }
-    };
-
-    let skipTurn = 0;
-
-    function drawBoard() {
-      const board = document.getElementById('board');
-      board.innerHTML = '';
-      for (let i = START; i <= GOAL; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        if (i === age) cell.classList.add('player');
-        cell.innerHTML = `<strong>${i}歳</strong>`;
-        if (events[i]) cell.innerHTML += `<div class="event">${events[i].text}</div>`;
-        board.appendChild(cell);
+  function drawBoard() {
+    const board = document.getElementById("board");
+    board.innerHTML = "";
+    for (let i = START; i <= GOAL; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      if (i === age) cell.classList.add("player");
+      cell.innerHTML = `<strong>${i}歳</strong>`;
+      if (events[i]) {
+        cell.innerHTML += `<br><small>${events[i]}</small>`;
       }
+      board.appendChild(cell);
+    }
+  }
+
+  function rollDice() {
+    if (age >= GOAL) return;
+    const dice = Math.floor(Math.random() * 6) + 1;
+    age += dice;
+
+    let text = `🎲 ${dice}が出た！ ${age}歳へ`;
+
+    if (events[age]) {
+      text += `<br>👉 ${events[age]}`;
+      if (age === 25) age += 1;
+      if (age === 30) age += 2;
+      if (age === 35) age -= 1;
+      if (age === 50) age += 2;
     }
 
-    function rollDice() {
-      if (age >= GOAL) return;
-      if (skipTurn > 0) {
-        skipTurn--;
-        log('😴 今日はお休みの番…');
-        return;
-      }
-
-      let dice = Math.floor(Math.random() * 6) + 1;
-      age += dice;
-      log(`🎲 ${dice}が出た！ ${age}歳へ`);
-
-      if (events[age]) {
-        const e = events[age];
-        log('👉 ' + e.text);
-        if (e.move) age += e.move;
-        if (e.skip) skipTurn = e.skip;
-      }
-
-      if (age >= GOAL) {
-        age = GOAL;
-        log('🎉 65歳到達！人生すごろくクリア！');
-      }
-
-      drawBoard();
-
-    onChildAdded(chatRef, (snapshot) => {
-      const msg = snapshot.val();
-      const chat = document.getElementById('chat');
-      chat.innerHTML += `<div><strong>${msg.name}</strong>: ${msg.text}</div>`;
-      chat.scrollTop = chat.scrollHeight;
-    });
-
-    window.sendMessage = function () {
-      const name = document.getElementById('name').value || '名無し';
-      const text = document.getElementById('message').value;
-      if (!text) return;
-      push(chatRef, { name, text, time: Date.now() });
-      document.getElementById('message').value = '';
-    };
+    if (age >= GOAL) {
+      age = GOAL;
+      text += "<br>🎉 65歳！ゴール！";
     }
 
-    function log(text) {
-      const el = document.getElementById('log');
-      el.innerHTML += text + '<br>';
-    }
-
+    document.getElementById("log").innerHTML = text;
     drawBoard();
-  </script>
-  <hr />
-  <h2>🌐 オンライン対戦について</h2>
-  <p>このゲームは <strong>Firebase Realtime Database</strong> を使うことで、友達と同時プレイできます。</p>
-  <ol>
-    <li>1人が「部屋」を作成</li>
-    <li>URLを共有</li>
-    <li>全員のサイコロ結果・位置が同期</li>
-  </ol>
+  }
 
-  <h3>🧩 実装イメージ（概要）</h3>
-  <pre>
-players: {
-  player1: { age: 23, skip: 0 },
-  player2: { age: 25, skip: 1 }
-}
-turn: "player1"
-  </pre>
+  drawBoard();
+</script>
 
-  <p>順番制ですごろくを回します。</p>
 </body>
 </html>
