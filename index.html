@@ -57,11 +57,17 @@
   const icons = ['😀','😎','👧','🧑‍🦱','🤖'];
 
   const events = {
+    23: { icon:'🎓', text:'大学院に進学！1回休み', skip:1 },
     25: { icon:'💼', text:'昇進！1マス進む', move:1 },
+    28: { icon:'✈️', text:'海外旅行！2マス進む', move:2 },
+    31: { icon:'🤕', text:'けがをした…1回休み', skip:1 },
     33: { icon:'💍', text:'結婚！2マス進む', move:2 },
-    35: { icon:'😢', text:'転職失敗…1マス戻る', move:-1 },
+    35: { icon:'🚀', text:'転職成功！2マス進む', move:2 },
+    38: { icon:'☕', text:'喫茶店を経営！1マス進む', move:1 },
     40: { icon:'🏠', text:'家を買う！1回休み', skip:1 },
-    50: { icon:'🎓', text:'子ども独立！2マス進む', move:2 }
+    45: { icon:'🎯', text:'宝くじ大当たり！！3マス進む', move:3 },
+    50: { icon:'🎓', text:'子ども独立！2マス進む', move:2 },
+    60: { icon:'🧓', text:'定年が近い…そのまま' }
   };
 
   let players = [];
