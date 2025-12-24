@@ -8,7 +8,20 @@
     body { font-family: sans-serif; background:#f0f9ff; padding:12px }
     h1 { font-size:22px }
     #setup, #game { max-width:520px; margin:auto }
-    #board { display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin-bottom:12px }
+    #board {
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:6px;
+      margin-bottom:12px;
+    }
+    /* ぐるぐる道（安全版） */
+    .cell:nth-child(10n+6),
+    .cell:nth-child(10n+7),
+    .cell:nth-child(10n+8),
+    .cell:nth-child(10n+9),
+    .cell:nth-child(10n+10) {
+      direction: rtl;
+    }
     .cell { background:white; border-radius:10px; padding:6px; font-size:11px; min-height:70px }
     .icon { font-size:18px }
     .event { font-size:10px }
@@ -45,7 +58,7 @@
 
   const events = {
     25: { icon:'💼', text:'昇進！1マス進む', move:1 },
-    30: { icon:'💍', text:'結婚！2マス進む', move:2 },
+    33: { icon:'💍', text:'結婚！2マス進む', move:2 },
     35: { icon:'😢', text:'転職失敗…1マス戻る', move:-1 },
     40: { icon:'🏠', text:'家を買う！1回休み', skip:1 },
     50: { icon:'🎓', text:'子ども独立！2マス進む', move:2 }
