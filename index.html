@@ -2,25 +2,16 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>人生すごろく（2〜5人・イラスト付き）</title>
+  <title>人生すごろく（完全版・安定）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: sans-serif; background:#f0f9ff; padding:12px }
     h1 { font-size:22px }
     #setup, #game { max-width:520px; margin:auto }
-    #board {
-      display:grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap:6px;
-      margin-bottom:12px;
-    }
-    /* すごろく道をジグザグにする */
-    .row-reverse {
-      direction: rtl;
-    }
+    #board { display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin-bottom:12px }
     .cell { background:white; border-radius:10px; padding:6px; font-size:11px; min-height:70px }
-    .event { font-size:10px; margin-top:2px }
     .icon { font-size:18px }
+    .event { font-size:10px }
     .p0{background:#fde68a} .p1{background:#bbf7d0} .p2{background:#bfdbfe} .p3{background:#fbcfe8} .p4{background:#ddd6fe}
     button { padding:10px 16px; border-radius:999px; border:none; background:#2563eb; color:white; font-size:15px }
     input { padding:6px }
@@ -30,52 +21,55 @@
 </head>
 <body>
 
-<h1>🎲 人生すごろく（イラスト付き）</h1>
+<h1>🎲 人生すごろく</h1>
 
 <div id="setup">
   <p>何人で遊ぶ？（2〜5人）</p>
   <input type="number" id="playerCount" min="2" max="5" value="2" /> 人
   <br><br>
-  <button onclick="startGame()">ゲーム開始</button>
+  <button id="startBtn">ゲーム開始</button>
 </div>
 
 <div id="game" style="display:none">
   <p id="turn"></p>
   <div id="board"></div>
-  <button onclick="rollDice()">サイコロをふる</button>
+  <button id="diceBtn">サイコロをふる</button>
   <div id="log"></div>
 </div>
 
 <script>
   const START = 20;
   const GOAL = 65;
-  let players = [];
   const icons = ['😀','😎','👧','🧑‍🦱','🤖'];
+
+  const events = {
+    25: { icon:'💼', text:'昇進！1マス進む', move:1 },
+    30: { icon:'💍', text:'結婚！2マス進む', move:2 },
+    35: { icon:'😢', text:'転職失敗…1マス戻る', move:-1 },
+    40: { icon:'🏠', text:'家を買う！1回休み', skip:1 },
+    50: { icon:'🎓', text:'子ども独立！2マス進む', move:2 }
+  };
+
+  let players = [];
   let current = 0;
 
-  // マスのイベント（最初から表示）
-  const events = {
-    25: { icon: '💼', text: '昇進！1マス進む', move: 1 },
-    28: { icon: '🎮', text: '夜ふかし…1回休み', skip: 1 },
-    30: { icon: '💍', text: '結婚！2マス進む', move: 2 },
-    35: { icon: '😢', text: '転職失敗…1マス戻る', move: -1 },
-    40: { icon: '🏠', text: '家を買う！1回休み', skip: 1 },
-    50: { icon: '🎓', text: '子ども独立！2マス進む', move: 2 },
-    60: { icon: '🧓', text: '定年が近い…そのまま' }
-  };
+  document.getElementById('startBtn').onclick = startGame;
+  document.getElementById('diceBtn').onclick = rollDice;
 
   function startGame() {
     const count = Number(document.getElementById('playerCount').value);
-    if (count < 2 || count > 5) return;
+    if (count < 2 || count > 5) return alert('2〜5人でね');
 
     players = [];
     for (let i = 0; i < count; i++) {
-      players.push({ name: icons[i], age: START, skip: 0 });
+      players.push({ icon: icons[i], age: START, skip: 0 });
     }
+    current = 0;
 
     document.getElementById('setup').style.display = 'none';
     document.getElementById('game').style.display = 'block';
-    updateTurnText();
+
+    updateTurn();
     drawBoard();
   }
 
@@ -83,28 +77,26 @@
     const board = document.getElementById('board');
     board.innerHTML = '';
 
-    for (let i = START; i <= GOAL; i++) {
+    for (let age = START; age <= GOAL; age++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
-      cell.innerHTML = `<strong>${i}歳</strong>`;
+      cell.innerHTML = `<strong>${age}歳</strong>`;
 
-      if (events[i]) {
-        cell.innerHTML += `<div class="icon">${events[i].icon}</div>`;
-        cell.innerHTML += `<div class="event">${events[i].text}</div>`;
+      if (events[age]) {
+        cell.innerHTML += `<div class="icon">${events[age].icon}</div>`;
+        cell.innerHTML += `<div class="event">${events[age].text}</div>`;
       }
 
-      players.forEach((p, idx) => {
-        if (p.age === i) {
+      players.forEach((p, i) => {
+        if (p.age === age) {
           const m = document.createElement('div');
-          m.className = 'p' + idx;
-          m.textContent = p.name;
+          m.className = 'p' + i;
+          m.textContent = p.icon;
           cell.appendChild(m);
         }
       });
 
       board.appendChild(cell);
-    }
-  }
     }
   }
 
@@ -113,25 +105,25 @@
 
     if (p.skip > 0) {
       p.skip--;
-      log(`${p.name}は1回お休み`);
+      log(p.icon + ' は1回休み');
       nextTurn();
       return;
     }
 
     const dice = Math.floor(Math.random() * 6) + 1;
     p.age += dice;
-    log(`${p.name}：${dice}が出た！`);
+    log(p.icon + ' は ' + dice + ' 出た！');
 
     const e = events[p.age];
     if (e) {
-      log('👉 ' + e.text);
+      log(e.text);
       if (e.move) p.age += e.move;
       if (e.skip) p.skip = e.skip;
     }
 
     if (p.age >= GOAL) {
       p.age = GOAL;
-      log(`🎉 ${p.name} ゴール！`);
+      log(p.icon + ' ゴール！');
     }
 
     drawBoard();
@@ -140,15 +132,15 @@
 
   function nextTurn() {
     current = (current + 1) % players.length;
-    updateTurnText();
+    updateTurn();
   }
 
-  function updateTurnText() {
-    document.getElementById('turn').textContent = `👉 ${players[current].name} の番`;
+  function updateTurn() {
+    document.getElementById('turn').textContent = players[current].icon + ' の番';
   }
 
-  function log(text) {
-    document.getElementById('log').innerHTML = text;
+  function log(t) {
+    document.getElementById('log').innerHTML = t;
   }
 </script>
 
