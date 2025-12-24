@@ -8,7 +8,16 @@
     body { font-family: sans-serif; background:#f0f9ff; padding:12px }
     h1 { font-size:22px }
     #setup, #game { max-width:520px; margin:auto }
-    #board { display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin-bottom:12px }
+    #board {
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:6px;
+      margin-bottom:12px;
+    }
+    /* すごろく道をジグザグにする */
+    .row-reverse {
+      direction: rtl;
+    }
     .cell { background:white; border-radius:10px; padding:6px; font-size:11px; min-height:70px }
     .event { font-size:10px; margin-top:2px }
     .icon { font-size:18px }
@@ -41,6 +50,7 @@
   const START = 20;
   const GOAL = 65;
   let players = [];
+  const icons = ['😀','😎','👧','🧑‍🦱','🤖'];
   let current = 0;
 
   // マスのイベント（最初から表示）
@@ -60,7 +70,7 @@
 
     players = [];
     for (let i = 0; i < count; i++) {
-      players.push({ name: 'プレイヤー' + (i+1), age: START, skip: 0 });
+      players.push({ name: icons[i], age: START, skip: 0 });
     }
 
     document.getElementById('setup').style.display = 'none';
@@ -72,7 +82,18 @@
   function drawBoard() {
     const board = document.getElementById('board');
     board.innerHTML = '';
+    let row = document.createElement('div');
+    row.style.display = 'contents';
+    let count = 0;
+
     for (let i = START; i <= GOAL; i++) {
+      if (count % 5 === 0) {
+        row = document.createElement('div');
+        row.style.display = 'contents';
+        if ((count / 5) % 2 === 1) row.className = 'row-reverse';
+        board.appendChild(row);
+      }
+
       const cell = document.createElement('div');
       cell.className = 'cell';
       cell.innerHTML = `<strong>${i}歳</strong>`;
@@ -90,7 +111,11 @@
           cell.appendChild(m);
         }
       });
-      board.appendChild(cell);
+
+      row.appendChild(cell);
+      count++;
+    }
+  }
     }
   }
 
