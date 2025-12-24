@@ -34,6 +34,7 @@
   <p id="turn"></p>
   <div id="board"></div>
   <button id="diceBtn">サイコロをふる</button>
+  <div id="diceResult" style="font-size:40px;text-align:center;margin:10px 0;"></div>
   <div id="log"></div>
 </div>
 
@@ -105,14 +106,16 @@
 
     if (p.skip > 0) {
       p.skip--;
+      showDice('⏸');
       log(p.icon + ' は1回休み');
       nextTurn();
       return;
     }
 
     const dice = Math.floor(Math.random() * 6) + 1;
+    showDice(dice);
     p.age += dice;
-    log(p.icon + ' は ' + dice + ' 出た！');
+    log(p.icon + ' は ' + dice + ' が出た！');
 
     const e = events[p.age];
     if (e) {
@@ -141,6 +144,10 @@
 
   function log(t) {
     document.getElementById('log').innerHTML = t;
+  }
+
+  function showDice(v) {
+    document.getElementById('diceResult').textContent = '🎲 ' + v;
   }
 </script>
 
