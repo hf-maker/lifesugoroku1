@@ -82,18 +82,8 @@
   function drawBoard() {
     const board = document.getElementById('board');
     board.innerHTML = '';
-    let row = document.createElement('div');
-    row.style.display = 'contents';
-    let count = 0;
 
     for (let i = START; i <= GOAL; i++) {
-      if (count % 5 === 0) {
-        row = document.createElement('div');
-        row.style.display = 'contents';
-        if ((count / 5) % 2 === 1) row.className = 'row-reverse';
-        board.appendChild(row);
-      }
-
       const cell = document.createElement('div');
       cell.className = 'cell';
       cell.innerHTML = `<strong>${i}歳</strong>`;
@@ -112,8 +102,7 @@
         }
       });
 
-      row.appendChild(cell);
-      count++;
+      board.appendChild(cell);
     }
   }
     }
