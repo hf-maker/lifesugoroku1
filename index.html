@@ -1,217 +1,87 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>人生すごろく（完全版・安定）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>人生すごろく</title>
   <style>
-    body { font-family: sans-serif; background:#f0f9ff; padding:12px }
-    h1 { font-size:22px }
-    #setup, #game { max-width:520px; margin:auto }
-    #board {
-      display:grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap:6px;
-      margin-bottom:12px;
-    }
-    /* ぐるぐる道（安全版） */
-    .cell:nth-child(10n+6),
-    .cell:nth-child(10n+7),
-    .cell:nth-child(10n+8),
-    .cell:nth-child(10n+9),
-    .cell:nth-child(10n+10) {
-      direction: rtl;
-    }
-    .cell { background:white; border-radius:10px; padding:6px; font-size:11px; min-height:70px }
-    .icon { font-size:18px }
-    .event { font-size:10px }
-    .p0{background:#fde68a} .p1{background:#bbf7d0} .p2{background:#bfdbfe} .p3{background:#fbcfe8} .p4{background:#ddd6fe}
-    button { padding:10px 16px; border-radius:999px; border:none; background:#2563eb; color:white; font-size:15px }
-    input { padding:6px }
-    #log { background:white; padding:10px; border-radius:10px; min-height:50px }
-    #turn { font-weight:bold; margin-bottom:6px }
+    body { font-family: sans-serif; }
+    #game { display: none; }
+    button { font-size: 16px; padding: 10px; }
   </style>
 </head>
 <body>
 
-<h1>🎲 人生すごろく</h1>
-
+<!-- 準備画面 -->
 <div id="setup">
-  <p>何人で遊ぶ？（2〜5人）</p>
-  <input type="number" id="playerCount" min="2" max="5" value="2" /> 人
+  <p>人数をえらんでね</p>
+  <select id="playerCount">
+    <option value="2">2人</option>
+    <option value="3">3人</option>
+    <option value="4">4人</option>
+    <option value="5">5人</option>
+  </select>
   <br><br>
- <button onclick="alert('押されたよ')">ゲーム開始</button>
+  <!-- ★これが正しいゲーム開始ボタン -->
+  <button id="startBtn" onclick="startGame()">ゲーム開始</button>
 </div>
 
-<div id="game" style="display:none">
+<!-- ゲーム画面 -->
+<div id="game">
   <p id="turn"></p>
-  <div id="board"></div>
-  <button id="diceBtn">サイコロをふる</button>
-  <div id="diceResult" style="font-size:40px;text-align:center;margin:10px 0;"></div>
-  <div id="ending" style="display:none;text-align:center;font-size:18px;margin:10px 0"></div>
+  <button id="diceBtn" onclick="rollDice()">サイコロをふる</button>
   <div id="log"></div>
 </div>
 
 <script>
   const START = 20;
   const GOAL = 65;
-  const icons = ['😀','😎','👧','🧑‍🦱','🤖'];
-
-  const events = {
-    21: { icon:'🎁', text:'プレゼントをもらう！お金+5', money:5 },
-    23: { icon:'🎓', text:'大学院に進学！1回休み', skip:1 },
-    25: { icon:'💼', text:'昇進！1マス進む', move:1 },
-    27: { icon:'🧳', text:'国内旅行！1マス進む', move:1 },
-    28: { icon:'✈️', text:'海外旅行！2マス進む', move:2 },
-    30: { icon:'❓', text:'人生イベント？', random:true },
-    31: { icon:'🤕', text:'けがをした…1回休み', skip:1 },
-    33: { icon:'💍', text:'結婚！2マス進む', move:2 },
-    35: { icon:'🚀', text:'転職成功！2マス進む', move:2 },
-    38: { icon:'☕', text:'喫茶店を経営！お金+10', money:10 },
-    40: { icon:'🏠', text:'家を買う！1回休み', skip:1 },
-    45: { icon:'🎯', text:'宝くじ大当たり！！お金+30', money:30 },
-    48: { icon:'❓', text:'人生イベント？', random:true },
-    52: { icon:'❓', text:'人生イベント？', random:true },
-    55: { icon:'🧘', text:'健康に気をつけた！そのまま' },
-    60: { icon:'🧓', text:'定年が近い…そのまま' },
-    64: { icon:'👑', text:'社長になる！！お金+50', money:50 }
-  };
 
   let players = [];
   let current = 0;
 
-  document.getElementById('startBtn').onclick = startGame;
-  document.getElementById('diceBtn').onclick = rollDice;
-
+  // ★ ゲーム開始
   function startGame() {
     players = [];
     current = 0;
-    document.getElementById('log').innerHTML = '';
-    document.getElementById('ending').style.display = 'none';
-    document.getElementById('diceBtn').disabled = false;
 
     const count = parseInt(document.getElementById('playerCount').value);
     const icons = ['😀','😎','👧','🧑','🤖'];
+
     for (let i = 0; i < count; i++) {
-      players.push({ icon: icons[i], age: START, skip: 0, money: 10 });
+      players.push({ icon: icons[i], age: START });
     }
-    drawBoard();
-    updateTurn();
-    }
-    current = 0;
 
     document.getElementById('setup').style.display = 'none';
     document.getElementById('game').style.display = 'block';
 
     updateTurn();
-    drawBoard();
+    log('🎮 ゲームスタート！');
   }
 
-  function drawBoard() {
-    const board = document.getElementById('board');
-    board.innerHTML = '';
-
-    for (let age = START; age <= GOAL; age++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.innerHTML = `<strong>${age}歳</strong>`;
-
-      if (events[age]) {
-        cell.innerHTML += `<div class="icon">${events[age].icon}</div>`;
-        cell.innerHTML += `<div class="event">${events[age].text}</div>`;
-      }
-
-      players.forEach((p, i) => {
-        if (p.age === age) {
-          const m = document.createElement('div');
-          m.className = 'p' + i;
-          m.textContent = p.icon;
-          cell.appendChild(m);
-        }
-      });
-
-      board.appendChild(cell);
-    }
-  }
-
+  // ★ サイコロ
   function rollDice() {
-    const p = players[current];
-
-    if (p.skip > 0) {
-      p.skip--;
-      showDice('⏸');
-      log(p.icon + ' は1回休み');
-      nextTurn();
-      return;
-    }
-
     const dice = Math.floor(Math.random() * 6) + 1;
-    showDice(dice);
+    const p = players[current];
     p.age += dice;
-    log(p.icon + ' は ' + dice + ' が出た！');
 
-    const e = events[p.age];
-    if (e) {
-      if (e.random) {
-        const r = randomEvents[Math.floor(Math.random()*randomEvents.length)];
-        log('❓ ' + r.text);
-        if (r.move) p.age += r.move;
-        if (r.skip) p.skip = r.skip;
-        if (r.money) p.money += r.money;
-      } else {
-        log(e.text);
-        if (e.move) p.age += e.move;
-        if (e.skip) p.skip = e.skip;
-        if (e.money) p.money += e.money;
-      }
-    }
+    log(p.icon + ' が ' + dice + ' 進んだ → ' + p.age + '歳');
 
     if (p.age >= GOAL) {
       p.age = GOAL;
       log(p.icon + ' ゴール！');
-      checkGameEnd();
-      return;
     }
 
-    drawBoard();
-    nextTurn();
-  }
-
-  function nextTurn() {
     current = (current + 1) % players.length;
     updateTurn();
   }
 
   function updateTurn() {
-    document.getElementById('turn').textContent = players[current].icon + ' の番（お金:' + players[current].money + '）';
+    document.getElementById('turn').textContent =
+      players[current].icon + ' の番';
   }
 
-  function checkGameEnd() {
-    const finished = players.filter(p => p.age >= GOAL);
-    if (finished.length === players.length) {
-      let result = '🎉 人生ゲーム終了！ 🎉<br><br>';
-      const ranking = [...players].sort((a,b)=>b.money-a.money);
-      ranking.forEach((p,i)=>{
-        const title = i===0 ? '👑 大富豪' : i===1 ? '💼 安定人生' : '🌱 しあわせ人生';
-        result += `${i+1}位：${p.icon}（お金 ${p.money}） ${title}<br>`;
-      });
-      document.getElementById('ending').innerHTML = result;
-      document.getElementById('ending').style.display = 'block';
-      document.getElementById('diceBtn').disabled = true;
-    }
-  }位：${p.icon}（お金 ${p.money}）<br>`;
-      });
-      document.getElementById('log').innerHTML = result;
-      document.getElementById('diceBtn').disabled = true;
-    }
-  }
-
-  function log(t) {
-    document.getElementById('log').innerHTML = t;
-  }
-
-  function showDice(v) {
-    document.getElementById('diceResult').textContent = '🎲 ' + v;
+  function log(text) {
+    document.getElementById('log').innerHTML += text + '<br>';
   }
 </script>
 
