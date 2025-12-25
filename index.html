@@ -48,6 +48,7 @@
   <div id="board"></div>
   <button id="diceBtn">サイコロをふる</button>
   <div id="diceResult" style="font-size:40px;text-align:center;margin:10px 0;"></div>
+  <div id="ending" style="display:none;text-align:center;font-size:18px;margin:10px 0"></div>
   <div id="log"></div>
 </div>
 
@@ -70,7 +71,7 @@
     40: { icon:'🏠', text:'家を買う！1回休み', skip:1 },
     45: { icon:'🎯', text:'宝くじ大当たり！！お金+30', money:30 },
     48: { icon:'❓', text:'人生イベント？', random:true },
-    50: { icon:'🎓', text:'子ども独立！2マス進む', move:2 },
+    52: { icon:'❓', text:'人生イベント？', random:true },
     55: { icon:'🧘', text:'健康に気をつけた！そのまま' },
     60: { icon:'🧓', text:'定年が近い…そのまま' },
     64: { icon:'👑', text:'社長になる！！お金+50', money:50 }
@@ -179,12 +180,19 @@
   }
 
   function checkGameEnd() {
-    const finished = players.filter(p => p.age === GOAL);
+    const finished = players.filter(p => p.age >= GOAL);
     if (finished.length === players.length) {
-      let result = '🏆 結果発表！<br>';
+      let result = '🎉 人生ゲーム終了！ 🎉<br><br>';
       const ranking = [...players].sort((a,b)=>b.money-a.money);
       ranking.forEach((p,i)=>{
-        result += `${i+1}位：${p.icon}（お金 ${p.money}）<br>`;
+        const title = i===0 ? '👑 大富豪' : i===1 ? '💼 安定人生' : '🌱 しあわせ人生';
+        result += `${i+1}位：${p.icon}（お金 ${p.money}） ${title}<br>`;
+      });
+      document.getElementById('ending').innerHTML = result;
+      document.getElementById('ending').style.display = 'block';
+      document.getElementById('diceBtn').disabled = true;
+    }
+  }位：${p.icon}（お金 ${p.money}）<br>`;
       });
       document.getElementById('log').innerHTML = result;
       document.getElementById('diceBtn').disabled = true;
