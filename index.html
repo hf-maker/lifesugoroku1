@@ -84,12 +84,20 @@
   document.getElementById('diceBtn').onclick = rollDice;
 
   function startGame() {
-    const count = Number(document.getElementById('playerCount').value);
-    if (count < 2 || count > 5) return alert('2〜5人でね');
-
     players = [];
+    current = 0;
+    document.getElementById('log').innerHTML = '';
+    document.getElementById('ending').style.display = 'none';
+    document.getElementById('diceBtn').disabled = false;
+
+    const count = parseInt(document.getElementById('playerCount').value);
+    const icons = ['😀','😎','👧','🧑','🤖'];
     for (let i = 0; i < count; i++) {
       players.push({ icon: icons[i], age: START, skip: 0, money: 10 });
+    }
+    drawBoard();
+    updateTurn();
+  });
     }
     current = 0;
 
